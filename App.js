@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import {
   SafeAreaView,
@@ -7,10 +8,34 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { AntDesign } from "@expo/vector-icons";
-import { Feather } from "@expo/vector-icons";
+import Task from "./components/Task";
 
 export default function App() {
+  const [tasks, setTasks] = useState(null);
+  const [category, setCategory] = useState("js"); // js, react, ct
+  const [text, setText] = useState("");
+
+  const newTasks = {
+    ...tasks,
+    [Date.now()]: {
+      text,
+      isDone: false,
+      isEditing: false,
+      category,
+    },
+  };
+
+  const addTask = async () => {
+    if (text) {
+      await setTasks(newTasks);
+      setText("");
+    }
+  };
+
+  const onChangeText = (payload) => {
+    setText(payload);
+  };
+
   return (
     <SafeAreaView style={styles.safearea}>
       <StatusBar style="auto" />
@@ -27,45 +52,20 @@ export default function App() {
           </View>
         </View>
         <View style={styles.inputWrapper}>
-          <TextInput placeholder="Enter your task" style={styles.input} />
+          <TextInput
+            value={text}
+            onChangeText={onChangeText}
+            returnKeyType="done"
+            onSubmitEditing={addTask}
+            placeholder="Enter your task"
+            style={styles.input}
+          />
         </View>
         <ScrollView>
-          <View style={styles.task}>
-            <Text>신나는 실행컨텍스트 공부</Text>
-            <View style={{ flexDirection: "row" }}>
-              <AntDesign name="checksquare" size={24} color="black" />
-              <Feather
-                style={{ marginLeft: 10 }}
-                name="edit"
-                size={24}
-                color="black"
-              />
-              <AntDesign
-                style={{ marginLeft: 10 }}
-                name="delete"
-                size={24}
-                color="black"
-              />
-            </View>
-          </View>
-          <View style={styles.task}>
-            <Text>너무 좋은 ES6 최신문법 공부</Text>
-            <View style={{ flexDirection: "row" }}>
-              <AntDesign name="checksquare" size={24} color="black" />
-              <Feather
-                style={{ marginLeft: 10 }}
-                name="edit"
-                size={24}
-                color="black"
-              />
-              <AntDesign
-                style={{ marginLeft: 10 }}
-                name="delete"
-                size={24}
-                color="black"
-              />
-            </View>
-          </View>
+          {tasks &&
+            Object.keys(tasks).map((key) => (
+              <Task key={key} text={tasks[key].text} />
+            ))}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -106,14 +106,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingVertical: 10,
     paddingHorizontal: 20,
-  },
-  task: {
-    flexDirection: "row",
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    backgroundColor: "#D9D9D9",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 10,
   },
 });
