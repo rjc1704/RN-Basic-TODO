@@ -7,6 +7,7 @@ import {
   Text,
   TextInput,
   View,
+  TouchableOpacity,
 } from "react-native";
 import Task from "./components/Task";
 
@@ -41,15 +42,33 @@ export default function App() {
       <StatusBar style="auto" />
       <View style={styles.container}>
         <View style={styles.tabs}>
-          <View style={styles.tab}>
+          <TouchableOpacity
+            onPress={() => setCategory("js")}
+            style={{
+              ...styles.tab,
+              backgroundColor: category === "js" ? "#0FBCF9" : "grey",
+            }}
+          >
             <Text style={styles.tabText}>Javascript</Text>
-          </View>
-          <View style={{ ...styles.tab, backgroundColor: "grey" }}>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setCategory("react")}
+            style={{
+              ...styles.tab,
+              backgroundColor: category === "react" ? "#0FBCF9" : "grey",
+            }}
+          >
             <Text style={styles.tabText}>React</Text>
-          </View>
-          <View style={{ ...styles.tab, backgroundColor: "grey" }}>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setCategory("ct")}
+            style={{
+              ...styles.tab,
+              backgroundColor: category === "ct" ? "#0FBCF9" : "grey",
+            }}
+          >
             <Text style={styles.tabText}>Coding Test</Text>
-          </View>
+          </TouchableOpacity>
         </View>
         <View style={styles.inputWrapper}>
           <TextInput
@@ -63,9 +82,11 @@ export default function App() {
         </View>
         <ScrollView>
           {tasks &&
-            Object.keys(tasks).map((key) => (
-              <Task key={key} text={tasks[key].text} />
-            ))}
+            Object.keys(tasks).map((key) => {
+              if (category === tasks[key].category) {
+                return <Task key={key} text={tasks[key].text} />;
+              }
+            })}
         </ScrollView>
       </View>
     </SafeAreaView>
