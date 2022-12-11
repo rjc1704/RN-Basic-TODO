@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
 
-export default function Task({ text, setDone, isDone }) {
+export default function Task({ text, setDone, isDone, deleteTask }) {
   return (
     <View style={styles.task}>
       <Text
@@ -22,12 +22,14 @@ export default function Task({ text, setDone, isDone }) {
           size={24}
           color="black"
         />
-        <AntDesign
-          style={{ marginLeft: 10 }}
-          name="delete"
-          size={24}
-          color="black"
-        />
+        <TouchableOpacity onPress={deleteTask}>
+          <AntDesign
+            style={{ marginLeft: 10 }}
+            name="delete"
+            size={24}
+            color="black"
+          />
+        </TouchableOpacity>
       </View>
     </View>
   );

@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import Task from "./components/Task";
 
@@ -26,11 +27,28 @@ export default function App() {
     },
   };
 
-  const addTask = async () => {
+  const addTask = () => {
     if (text) {
-      await setTasks(newTasks);
+      setTasks(newTasks);
       setText("");
     }
+  };
+
+  const deleteTask = (key) => {
+    Alert.alert("Task 삭제", "정말 삭제하시겠습니까?", [
+      {
+        text: "Cancel",
+        style: "destructive",
+      },
+      {
+        text: "OK. Delete it.",
+        onPress: () => {
+          const newTasks = { ...tasks };
+          delete newTasks[key];
+          setTasks(newTasks);
+        },
+      },
+    ]);
   };
 
   const onChangeText = (payload) => {
@@ -95,6 +113,7 @@ export default function App() {
                     key={key}
                     isDone={tasks[key].isDone}
                     setDone={() => setDone(key)}
+                    deleteTask={() => deleteTask(key)}
                     text={tasks[key].text}
                   />
                 );
