@@ -1,13 +1,21 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
 
-export default function Task({ text }) {
+export default function Task({ text, setDone, isDone }) {
   return (
     <View style={styles.task}>
-      <Text>{text}</Text>
+      <Text
+        style={{
+          textDecorationLine: isDone ? "line-through" : "none",
+        }}
+      >
+        {text}
+      </Text>
       <View style={{ flexDirection: "row" }}>
-        <AntDesign name="checksquare" size={24} color="black" />
+        <TouchableOpacity onPress={setDone}>
+          <AntDesign name="checksquare" size={24} color="black" />
+        </TouchableOpacity>
         <Feather
           style={{ marginLeft: 10 }}
           name="edit"

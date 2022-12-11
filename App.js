@@ -37,6 +37,12 @@ export default function App() {
     setText(payload);
   };
 
+  const setDone = (key) => {
+    const newTasks = { ...tasks };
+    newTasks[key].isDone = !tasks[key].isDone;
+    setTasks(newTasks);
+  };
+
   return (
     <SafeAreaView style={styles.safearea}>
       <StatusBar style="auto" />
@@ -84,7 +90,14 @@ export default function App() {
           {tasks &&
             Object.keys(tasks).map((key) => {
               if (category === tasks[key].category) {
-                return <Task key={key} text={tasks[key].text} />;
+                return (
+                  <Task
+                    key={key}
+                    isDone={tasks[key].isDone}
+                    setDone={() => setDone(key)}
+                    text={tasks[key].text}
+                  />
+                );
               }
             })}
         </ScrollView>
