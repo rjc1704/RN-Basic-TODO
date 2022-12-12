@@ -8,98 +8,75 @@ import {
   TextInput,
   View,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import Task from "./components/Task";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import {
+  collection,
+  addDoc,
+  doc,
+  setDoc,
+  getDoc,
+  query,
+  orderBy,
+  onSnapshot,
+} from "firebase/firestore";
+import { dbService } from "./firebase";
 
 export default function App() {
-  const [tasks, setTasks] = useState(null);
-  const [category, setCategory] = useState("js"); // js, react, ct
+  const [taskList, setTaskList] = useState([]);
+  const [category, setCategory] = useState(""); // js, react, ct
   const [text, setText] = useState("");
-  const [editingText, setEditingText] = useState("");
-  const onChangeEditingText = (payload) => {
-    setEditingText(payload);
-  };
-
-  const newTasks = {
-    ...tasks,
-    [Date.now()]: {
-      text,
-      isDone: false,
-      isEditing: false,
-      category,
-    },
-  };
 
   const addTask = async () => {
     if (text) {
-      setTasks(newTasks);
-      await AsyncStorage.setItem("@tasks", JSON.stringify(newTasks));
+      // addDoc 이용 시 doc.id는 임의로 자동생성 된다는 점!
+      // 만약 doc.id를 지정해서 추가하고 싶다면 setDoc 을 이용할 것!
+      await addDoc(collection(dbService, "tasks"), {
+        text,
+        isDone: false,
+        isEditing: false,
+        category,
+        createdAt: Date.now(),
+      });
       setText("");
     }
-  };
-
-  const deleteTask = (key) => {
-    Alert.alert("Task 삭제", "정말 삭제하시겠습니까?", [
-      {
-        text: "Cancel",
-        style: "destructive",
-      },
-      {
-        text: "OK. Delete it.",
-        onPress: async () => {
-          const newTasks = { ...tasks };
-          delete newTasks[key];
-          setTasks(newTasks);
-          await AsyncStorage.setItem("@tasks", JSON.stringify(newTasks));
-        },
-      },
-    ]);
   };
 
   const onChangeText = (payload) => {
     setText(payload);
   };
 
-  const setDone = async (key) => {
-    const newTasks = { ...tasks };
-    newTasks[key].isDone = !tasks[key].isDone;
-    setTasks(newTasks);
-    await AsyncStorage.setItem("@tasks", JSON.stringify(newTasks));
-  };
-
-  const setEditing = async (key) => {
-    const newTasks = { ...tasks };
-    newTasks[key].isEditing = !tasks[key].isEditing;
-    setTasks(newTasks);
-    await AsyncStorage.setItem("@tasks", JSON.stringify(newTasks));
-  };
-
-  const editText = async (key) => {
-    // 수정 텍스트를 입력했을 경우만 수정처리
-    if (editingText) {
-      const newTasks = { ...tasks };
-      newTasks[key].text = editingText;
-      setTasks(newTasks);
-      await AsyncStorage.setItem("@tasks", JSON.stringify(newTasks));
-    }
-    setEditing(key);
-  };
-
   const setTheCategory = async (category) => {
-    await AsyncStorage.setItem("@category", category);
+    await setDoc(doc(dbService, "currentCategory", "category"), {
+      category,
+    });
     setCategory(category);
   };
 
   useEffect(() => {
-    const setTodos = async () => {
-      const theTasks = await AsyncStorage.getItem("@tasks");
-      const theCategory = await AsyncStorage.getItem("@category");
-      setTasks(JSON.parse(theTasks));
-      setCategory(theCategory);
+    const q = query(
+      collection(dbService, "tasks"),
+      orderBy("createdAt", "desc")
+    );
+
+    onSnapshot(q, (snapshot) => {
+      // firestore의 tasks 라는 콜렉션(폴더) 내에 변화가 생길 때 마다 실행되는 이벤트리스너
+      const newTasks = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setTaskList(newTasks);
+    });
+
+    const getCategory = async () => {
+      const categorySnap = await getDoc(
+        doc(dbService, "currentCategory", "category")
+      );
+
+      setCategory(categorySnap.data().category || "js");
     };
-    setTodos();
+    getCategory();
   }, []);
 
   return (
@@ -146,24 +123,11 @@ export default function App() {
           />
         </View>
         <ScrollView>
-          {tasks &&
-            Object.keys(tasks).map((key) => {
-              if (category === tasks[key].category) {
-                return (
-                  <Task
-                    key={key}
-                    isEditing={tasks[key].isEditing}
-                    setEditing={() => setEditing(key)}
-                    editText={() => editText(key)}
-                    onChangeEditingText={onChangeEditingText}
-                    isDone={tasks[key].isDone}
-                    setDone={() => setDone(key)}
-                    deleteTask={() => deleteTask(key)}
-                    text={tasks[key].text}
-                  />
-                );
-              }
-            })}
+          {taskList.map((task) => {
+            if (category === task.category) {
+              return <Task key={task.id} task={task} />;
+            }
+          })}
         </ScrollView>
       </View>
     </SafeAreaView>

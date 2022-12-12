@@ -5,20 +5,55 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
+  Alert,
 } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
+import { updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { dbService } from "../firebase";
 
-export default function Task({
-  text,
-  setDone,
-  isDone,
-  deleteTask,
-  isEditing,
-  setEditing,
-  editText,
-  onChangeEditingText,
-}) {
+export default function Task({ task: { id, text, isDone, isEditing } }) {
+  const [editingText, setEditingText] = useState("");
+  const deleteTask = () => {
+    Alert.alert("Task 삭제", "정말 삭제하시겠습니까?", [
+      {
+        text: "Cancel",
+        style: "destructive",
+      },
+      {
+        text: "OK. Delete it.",
+        onPress: async () => {
+          await deleteDoc(doc(dbService, "tasks", id));
+        },
+      },
+    ]);
+  };
+
+  const onChangeEditingText = (payload) => {
+    setEditingText(payload);
+  };
+
+  const setDone = async () => {
+    await updateDoc(doc(dbService, "tasks", id), {
+      isDone: !isDone,
+    });
+  };
+  const setEditing = async () => {
+    await updateDoc(doc(dbService, "tasks", id), {
+      isEditing: !isEditing,
+    });
+  };
+
+  const editText = async () => {
+    // 수정 텍스트를 입력했을 경우만 수정처리
+    if (editingText) {
+      await updateDoc(doc(dbService, "tasks", id), {
+        text: editingText,
+      });
+    }
+    setEditing();
+  };
+
   return (
     <View style={styles.task}>
       {isEditing ? (
