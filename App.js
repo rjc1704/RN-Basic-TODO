@@ -77,10 +77,13 @@ export default function App() {
   };
 
   const editText = async (key) => {
-    const newTasks = { ...tasks };
-    newTasks[key].text = editingText;
-    setTasks(newTasks);
-    await AsyncStorage.setItem("@tasks", JSON.stringify(newTasks));
+    // 수정 텍스트를 입력했을 경우만 수정처리
+    if (editingText) {
+      const newTasks = { ...tasks };
+      newTasks[key].text = editingText;
+      setTasks(newTasks);
+      await AsyncStorage.setItem("@tasks", JSON.stringify(newTasks));
+    }
     setEditing(key);
   };
 
