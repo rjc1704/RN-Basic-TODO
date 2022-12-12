@@ -16,6 +16,10 @@ export default function App() {
   const [tasks, setTasks] = useState(null);
   const [category, setCategory] = useState("js"); // js, react, ct
   const [text, setText] = useState("");
+  const [editingText, setEditingText] = useState("");
+  const onChangeEditingText = (payload) => {
+    setEditingText(payload);
+  };
 
   const newTasks = {
     ...tasks,
@@ -59,6 +63,19 @@ export default function App() {
     const newTasks = { ...tasks };
     newTasks[key].isDone = !tasks[key].isDone;
     setTasks(newTasks);
+  };
+
+  const setEditing = (key) => {
+    const newTasks = { ...tasks };
+    newTasks[key].isEditing = !tasks[key].isEditing;
+    setTasks(newTasks);
+  };
+
+  const editText = (key) => {
+    const newTasks = { ...tasks };
+    newTasks[key].text = editingText;
+    setTasks(newTasks);
+    setEditing(key);
   };
 
   return (
@@ -111,6 +128,10 @@ export default function App() {
                 return (
                   <Task
                     key={key}
+                    isEditing={tasks[key].isEditing}
+                    setEditing={() => setEditing(key)}
+                    editText={() => editText(key)}
+                    onChangeEditingText={onChangeEditingText}
                     isDone={tasks[key].isDone}
                     setDone={() => setDone(key)}
                     deleteTask={() => deleteTask(key)}

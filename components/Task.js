@@ -1,27 +1,57 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+} from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
 
-export default function Task({ text, setDone, isDone, deleteTask }) {
+export default function Task({
+  text,
+  setDone,
+  isDone,
+  deleteTask,
+  isEditing,
+  setEditing,
+  editText,
+  onChangeEditingText,
+}) {
   return (
     <View style={styles.task}>
-      <Text
-        style={{
-          textDecorationLine: isDone ? "line-through" : "none",
-        }}
-      >
-        {text}
-      </Text>
+      {isEditing ? (
+        <TextInput
+          style={styles.editInput}
+          autoFocus
+          maxLength={15}
+          onSubmitEditing={editText}
+          placeholder={text}
+          onChangeText={onChangeEditingText}
+        />
+      ) : (
+        <Text
+          style={{
+            textDecorationLine: isDone ? "line-through" : "none",
+          }}
+        >
+          {text}
+        </Text>
+      )}
+
       <View style={{ flexDirection: "row" }}>
         <TouchableOpacity onPress={setDone}>
           <AntDesign name="checksquare" size={24} color="black" />
         </TouchableOpacity>
-        <Feather
-          style={{ marginLeft: 10 }}
-          name="edit"
-          size={24}
-          color="black"
-        />
+        <TouchableOpacity onPress={setEditing}>
+          <Feather
+            style={{ marginLeft: 10 }}
+            name="edit"
+            size={24}
+            color="black"
+          />
+        </TouchableOpacity>
         <TouchableOpacity onPress={deleteTask}>
           <AntDesign
             style={{ marginLeft: 10 }}
@@ -43,5 +73,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 10,
+  },
+  editInput: {
+    backgroundColor: "white",
+    flex: 1,
   },
 });
