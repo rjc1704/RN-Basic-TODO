@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import {
   SafeAreaView,
@@ -11,6 +11,7 @@ import {
   Alert,
 } from "react-native";
 import Task from "./components/Task";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function App() {
   const [tasks, setTasks] = useState(null);
@@ -31,9 +32,10 @@ export default function App() {
     },
   };
 
-  const addTask = () => {
+  const addTask = async () => {
     if (text) {
       setTasks(newTasks);
+      await AsyncStorage.setItem("@tasks", JSON.stringify(newTasks));
       setText("");
     }
   };
@@ -46,10 +48,11 @@ export default function App() {
       },
       {
         text: "OK. Delete it.",
-        onPress: () => {
+        onPress: async () => {
           const newTasks = { ...tasks };
           delete newTasks[key];
           setTasks(newTasks);
+          await AsyncStorage.setItem("@tasks", JSON.stringify(newTasks));
         },
       },
     ]);
@@ -59,24 +62,42 @@ export default function App() {
     setText(payload);
   };
 
-  const setDone = (key) => {
+  const setDone = async (key) => {
     const newTasks = { ...tasks };
     newTasks[key].isDone = !tasks[key].isDone;
     setTasks(newTasks);
+    await AsyncStorage.setItem("@tasks", JSON.stringify(newTasks));
   };
 
-  const setEditing = (key) => {
+  const setEditing = async (key) => {
     const newTasks = { ...tasks };
     newTasks[key].isEditing = !tasks[key].isEditing;
     setTasks(newTasks);
+    await AsyncStorage.setItem("@tasks", JSON.stringify(newTasks));
   };
 
-  const editText = (key) => {
+  const editText = async (key) => {
     const newTasks = { ...tasks };
     newTasks[key].text = editingText;
     setTasks(newTasks);
+    await AsyncStorage.setItem("@tasks", JSON.stringify(newTasks));
     setEditing(key);
   };
+
+  const setTheCategory = async (category) => {
+    await AsyncStorage.setItem("@category", category);
+    setCategory(category);
+  };
+
+  useEffect(() => {
+    const setTodos = async () => {
+      const theTasks = await AsyncStorage.getItem("@tasks");
+      const theCategory = await AsyncStorage.getItem("@category");
+      setTasks(JSON.parse(theTasks));
+      setCategory(theCategory);
+    };
+    setTodos();
+  }, []);
 
   return (
     <SafeAreaView style={styles.safearea}>
@@ -84,7 +105,7 @@ export default function App() {
       <View style={styles.container}>
         <View style={styles.tabs}>
           <TouchableOpacity
-            onPress={() => setCategory("js")}
+            onPress={() => setTheCategory("js")}
             style={{
               ...styles.tab,
               backgroundColor: category === "js" ? "#0FBCF9" : "grey",
@@ -93,7 +114,7 @@ export default function App() {
             <Text style={styles.tabText}>Javascript</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => setCategory("react")}
+            onPress={() => setTheCategory("react")}
             style={{
               ...styles.tab,
               backgroundColor: category === "react" ? "#0FBCF9" : "grey",
@@ -102,7 +123,7 @@ export default function App() {
             <Text style={styles.tabText}>React</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => setCategory("ct")}
+            onPress={() => setTheCategory("ct")}
             style={{
               ...styles.tab,
               backgroundColor: category === "ct" ? "#0FBCF9" : "grey",
