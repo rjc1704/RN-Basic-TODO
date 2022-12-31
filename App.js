@@ -11,6 +11,18 @@ import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Tabs from "./components/Tabs";
 import Todo from "./components/Todo";
+import {
+  onSnapshot,
+  query,
+  collection,
+  doc,
+  orderBy,
+  addDoc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+} from "firebase/firestore";
+import { dbService } from "./firebase";
 
 export default function App() {
   // delete todo
@@ -21,16 +33,18 @@ export default function App() {
   const [editText, setEditText] = useState("");
 
   const newTodo = {
-    id: Date.now(),
+    // id: Date.now(),
     text,
     isDone: false,
     isEdit: false,
     category,
+    createdAt: Date.now(),
   };
 
-  const addTodo = () => {
+  const addTodo = async () => {
     setTodos((prev) => [...prev, newTodo]);
     setText("");
+    await addDoc(collection(dbService, "todos"), newTodo);
   };
 
   const deleteTodo = (id) => {
@@ -45,64 +59,92 @@ export default function App() {
       {
         text: "삭제",
         style: "destructive",
-        onPress: () => {
+        onPress: async () => {
           const newTodos = todos.filter((todo) => todo.id !== id);
           setTodos(newTodos);
+          await deleteDoc(doc(dbService, "todos", id));
         },
       },
     ]);
   };
 
-  const setEdit = (id) => {
+  const setEdit = async (id) => {
     const newTodos = [...todos];
     const idx = newTodos.findIndex((todo) => todo.id === id);
     newTodos[idx].isEdit = !newTodos[idx].isEdit;
     setTodos(newTodos);
+    await updateDoc(doc(dbService, "todos", id), {
+      isEdit: newTodos[idx].isEdit,
+    });
   };
 
-  const editTodo = (id) => {
+  const editTodo = async (id) => {
     // 1. id 값받아서 해당 배열의 요소를 찾는다. idx 찾기
     // 2. todos[idx].text = editText;
-    const newTodos = [...todos];
-    const idx = newTodos.findIndex((todo) => todo.id === id);
-    newTodos[idx].text = editText;
-    newTodos[idx].isEdit = false;
-    setTodos(newTodos);
+    // const newTodos = [...todos];
+    // const idx = newTodos.findIndex((todo) => todo.id === id);
+    // newTodos[idx].text = editText;
+    // newTodos[idx].isEdit = false;
+    // setTodos(newTodos);
+    await updateDoc(doc(dbService, "todos", id), {
+      text: editText,
+      isEdit: false,
+    });
   };
 
-  const setDone = (id) => {
+  const setDone = async (id) => {
     // 1. id를 매개변수로 받는다.
     // 2. id에 해당하는 배열의 요소를 찾는다.
     // 3. 그 배열의 요소의 isDone 값을 토글링한 후에 setTodos.
-    const newTodos = [...todos];
-    const idx = newTodos.findIndex((todo) => todo.id === id);
-    newTodos[idx].isDone = !newTodos[idx].isDone;
-    setTodos(newTodos);
+    // const newTodos = [...todos];
+    const idx = todos.findIndex((todo) => todo.id === id);
+    // newTodos[idx].isDone = !newTodos[idx].isDone;
+    // setTodos(newTodos);
+    try {
+      await updateDoc(doc(dbService, "todos", id), {
+        isDone: !todos[idx].isDone,
+      });
+    } catch (err) {
+      console.log("err:", err);
+    }
   };
 
   const setCat = async (cat) => {
-    console.log("cat:", cat);
     setCategory(cat);
-    await AsyncStorage.setItem("category", cat);
+    // await AsyncStorage.setItem("category", cat);
+    await updateDoc(doc(dbService, "category", "currentCategory"), {
+      category: cat,
+    });
   };
 
   useEffect(() => {
-    // 현재의 최신 todos를 AsyncStorage에 저장
-    const saveTodos = async () => {
-      await AsyncStorage.setItem("todos", JSON.stringify(todos));
-    };
-    if (todos.length > 0) saveTodos();
-  }, [todos]);
+    const q = query(
+      collection(dbService, "todos"),
+      orderBy("createdAt", "desc")
+    );
 
-  useEffect(() => {
-    const getData = async () => {
-      const resp_todos = await AsyncStorage.getItem("todos"); // todos 배열
-      const resp_cat = await AsyncStorage.getItem("category"); // undefined / null
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const newTodos = snapshot.docs.map((doc) => {
+        const newTodo = {
+          id: doc.id,
+          ...doc.data(),
+        };
+        return newTodo;
+      });
+      setTodos(newTodos);
+    });
 
-      setTodos(JSON.parse(resp_todos) ?? []);
-      setCategory(resp_cat ?? "js");
+    const getCategory = async () => {
+      const snapshot = await getDoc(
+        doc(dbService, "category", "currentCategory")
+      );
+      setCategory(snapshot.data().category ?? "js");
     };
-    getData();
+    getCategory();
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   return (
